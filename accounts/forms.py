@@ -4,12 +4,12 @@ from .models import Account
 
 class RegistrationForm(forms.ModelForm):
 
-    passwords = forms.CharField(widget=forms.PasswordInput(attrs={
+    password = forms.CharField(widget=forms.PasswordInput(attrs={
         'placeholder': 'Enter password',
         'class': 'form-control',
     }))
 
-    confirm_passwords = forms.CharField(widget=forms.PasswordInput(attrs={
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={
         'placeholder': 'Confirm password'
     }))
 
@@ -19,7 +19,7 @@ class RegistrationForm(forms.ModelForm):
                   'email', 'password']
         
     def __init__(self, *args, **kwargs):
-        super(RegistrationForm, self).__init__(*args, *kwargs)
+        super(RegistrationForm, self).__init__(*args, **kwargs)
         self.fields['first_name'].widget.attrs['placeholder'] = 'Enter First Name'
         self.fields['last_name'].widget.attrs['placeholder'] = 'Enter Last Name'
         self.fields['phone_number'].widget.attrs['placeholder'] = 'Enter Phone Number'
