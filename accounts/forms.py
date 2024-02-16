@@ -33,7 +33,7 @@ class RegistrationForm(forms.ModelForm):
         password = cleaned_data.get('password')
         confirm_password = cleaned_data.get('confirm_password')
 
-        if password and confirm_password:  # Check if both passwords are present
+        if password and confirm_password:
             if password != confirm_password:
                 raise forms.ValidationError(
                     "Password does not match."
