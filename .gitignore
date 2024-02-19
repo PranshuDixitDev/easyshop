@@ -177,3 +177,5 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/django
 easyshop/static/images/logo.jpeg
 static/images/logo.jpeg
+easyshop/__pycache__
+easyshop/settings.py
