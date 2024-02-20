@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from carts.models import Cart,CartItem
 from carts.views import _cart_id
+import requests
 
 
 #Email verification imports
@@ -117,7 +118,16 @@ def login(request):
 
 			auth.login(request, user)
 			messages.success(request, 'You are now logged in')
-			return redirect('dashboard')
+			url = request.META.get('HTTP_REFERER')
+			try:
+				query = requests.utils.urlparse(url).query
+				
+				params = dict(x.split('=') for x in query.split('&'))
+				if 'next' in params:
+					nextPage = params['next']
+					return redirect(nextPage)
+			except:
+				return redirect('dashboard')
 		else:
 			print(f"User: {user}, messages: {messages.get_messages(True)}")
 			messages.error(request, 'Invalid login credentials')
