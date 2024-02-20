@@ -1,10 +1,13 @@
 from django.shortcuts import render, redirect
-from .forms import RegistrationForm
-from .models import Account
+from accounts.forms import RegistrationForm
+from accounts.models import Account
 from django.contrib import messages
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from carts.models import Cart,CartItem
+from carts.views import _cart_id
+
 
 #Email verification imports
 from django.contrib.sites.shortcuts import get_current_site
@@ -36,9 +39,9 @@ def register(request):
 			)
 			user.phone_number = phone_number
 			user.save()
-			
+
 			# user activation
-			
+
 			current_site = get_current_site(request)
 			mail_subject = "Please open link below to activate your Account."
 			message = render_to_string(
@@ -68,10 +71,50 @@ def login(request):
 	if request.method == "POST":
 		email = request.POST['email']
 		password = request.POST['password']
-		
+
 		user = auth.authenticate(email=email, password=password)
-		
+
 		if user is not None:
+			try:
+				cart = Cart.objects.get(cart_id=_cart_id(request))
+				is_cart_item_exist = CartItem.objects.filter(cart=cart).exists()
+				if is_cart_item_exist:
+					cart_item = CartItem.objects.filter(cart=cart)
+
+					# Getting product variations by cart id
+					product_variation = []
+					for item in cart_item:
+						variations = item.variations.all()
+						product_variation.append(list(variations))
+
+					# Get cart items from the users to access his product variations.
+					cart_item = CartItem.objects.filter(user=user)
+					ex_var_list = []
+					id = []
+					# existing_variations --> database
+					# current_variations --> product_variation
+					# item_id --> database
+					for item in cart_item:
+						existing_variation = item.variations.all()
+						ex_var_list.append(list(existing_variation))
+						id.append(item.id)
+
+					for common_product in product_variation:
+						if common_product in ex_var_list:
+							index = ex_var_list.index(common_product)
+							item_id = id[index]
+							item = CartItem.objects.get(id=item_id)
+							item.quantity +=1
+							item.user = user
+							item.save()
+						else:
+							cart_item = CartItem.objects.filter(cart=cart)
+							for item in cart_item:
+								item.user = user
+								item.save()
+			except:
+				pass
+
 			auth.login(request, user)
 			messages.success(request, 'You are now logged in')
 			return redirect('dashboard')
@@ -116,7 +159,7 @@ def forgotPassword(request):
 		email = request.POST['email']
 		if Account.objects.filter(email=email).exists():
 			user = Account.objects.get(email__exact=email)
-			
+
 			current_site = get_current_site(request)
 			mail_subject = "Please reset your password."
 			message = render_to_string(
@@ -130,14 +173,14 @@ def forgotPassword(request):
 			send_to_email = email
 			send_email = EmailMessage(mail_subject, message, to=[send_to_email])
 			send_email.send()
-			
+
 			messages.success(request, 'PASSWORD reset link has been sent to registered email address.')
 			return redirect('login')
-			
+
 		else:
 			messages.error(request, 'Account doesnt exists !')
 			return redirect('forgotPassword')
-		
+
 	return render(request, 'accounts/forgotPassword.html')
 
 def resetpassword_validate(request, uidb64, token):
@@ -146,7 +189,7 @@ def resetpassword_validate(request, uidb64, token):
 		user = Account._default_manager.get(pk=uid)
 	except(TypeError, ValueError, OverflowError, Account.DoesNotExist):
 		user = None
-  
+
 	if user is not None and default_token_generator.check_token(user, token):
 		request.session['uid'] = uid
 		messages.success(request, 'Please reset your password')
@@ -169,12 +212,12 @@ def resetPassword(request):
 			user.save()
 			messages.success(request, 'Password reset successful')
 			return redirect('login')
-   
-		
+
+
 		else:
 			messages.error(request, 'Password do no match')
 			return redirect('resetPassword')
-	
+
 	else:
 
 		return render(request, 'accounts/resetPassword.html')
