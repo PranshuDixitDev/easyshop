@@ -32,6 +32,7 @@ def place_order(request, total=0, quantity=0,):
         form = OrderForm(request.POST)
         if form.is_valid():
             data = OrderDetails()
+            data.user = current_user
             data.first_name = form.cleaned_data['first_name']
             data.last_name = form.cleaned_data['last_name']
             data.phone = form.cleaned_data['phone']
@@ -46,7 +47,6 @@ def place_order(request, total=0, quantity=0,):
             data.tax = tax
             data.ip = request.META.get('REMOTE_ADDR')
             data.save()
-            print("*****Before genrating order number****", data.first_name)
 
             # Genrate Order Number
             yr = int(datetime.date.today().strftime('%Y'))
@@ -59,11 +59,8 @@ def place_order(request, total=0, quantity=0,):
             data.order_number = order_number
             
             data.save()
-            print("Saved data object:", data)
-            print("Generated order_number:", data.order_number)
-
+            
             orderdetails = OrderDetails.objects.get(user=current_user, is_ordered=False, order_number=order_number)
-            print("*****after genrating order number****", data.first_name)
             context = {
                 'orderdetails': orderdetails,
                 'cart_items': cart_items,
@@ -72,7 +69,6 @@ def place_order(request, total=0, quantity=0,):
                 'grand_total': grand_total, 
                 
             }
-            print("++++++>>>>order Details>>>>>>" , context)
             return render(request, 'orders/payments.html', context)
         
         else:
