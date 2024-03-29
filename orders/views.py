@@ -1,12 +1,30 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from carts.models import CartItem
-from .forms import OrderForm, OrderDetails
+from .forms import OrderForm
+from .models import OrderDetails, Payment
 import datetime
+import json
 # Create your views here.
 
 
 def payments(request):
+    body = json.loads(request.body)
+    orderedtails = OrderDetails.objects.get(user=request.user, is_ordered=False, order_number=body['orderID'])
+
+    # store transaction details on payment model 
+    payment = Payment(
+        user = request.user,
+        payment_id = body['transID'],
+        payment_field = body["payment_field"],
+        amount_paid = orderedtails.order_total,
+        status = body['status']
+    )
+    payment.save()
+    
+    orderedtails.payment = payment
+    orderedtails.is_ordered = True
+    orderedtails.save()
     return render(request, 'orders/payments.html')
 
 
