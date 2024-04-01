@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from carts.models import CartItem
 from .forms import OrderForm
-from .models import OrderDetails, Payment
+from .models import OrderDetails, Payment, OrderProduct
 import datetime
 import json
 # Create your views here.
@@ -25,6 +25,34 @@ def payments(request):
     orderedtails.payment = payment
     orderedtails.is_ordered = True
     orderedtails.save()
+    
+    # Move the cart items to Order Product table
+    cart_items = CartItem.objects.filter(user=request.user)
+    
+    for item in cart_items:
+        orderProduct = OrderProduct()
+        orderProduct.order = order.id
+        orderProduct.payment = payment
+        orderProduct.user = request.user.id
+        orderProduct.product_id = item.product_id
+        orderProduct.quantity = item.quantity
+        orderProduct.product_price = item.product.price
+        orderProduct.ordered = True
+        orderProduct.save()
+        # orderProduct.variation = item.variations
+        
+    
+    #Reduce the quantity of rhe sold products
+    
+    
+    # Clear the Cart 
+    
+    
+    # Send order recevied email to customer 
+    
+    
+    # Send order number and transaction id back to snedData method via json response. 
+    
     return render(request, 'orders/payments.html')
 
 
